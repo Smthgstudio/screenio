@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -26,7 +27,7 @@ export default function SignupPage() {
     <main className="flex min-h-screen bg-[#EDEAE4]">
       {/* Left — branding */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 border-r border-black/8">
-        <span className="text-sm font-black tracking-tight text-[#141414]">Screenio</span>
+        <Logo height={28} />
         <div>
           <p className="text-[56px] font-black leading-[1.05] tracking-tight text-[#141414]">
             Votre premier écran en moins de 2 minutes.
@@ -38,7 +39,7 @@ export default function SignupPage() {
       {/* Right — form */}
       <div className="flex flex-1 flex-col justify-center px-8 py-12 lg:px-16">
         <div className="w-full max-w-sm mx-auto">
-          <span className="lg:hidden block text-sm font-black tracking-tight text-[#141414] mb-10">Screenio</span>
+          <Logo height={24} className="lg:hidden mb-10" />
           <h1 className="text-2xl font-black text-[#141414] mb-1">Créer un compte</h1>
           <p className="text-sm text-[#888880] mb-8">Gratuit, sans carte bancaire</p>
 

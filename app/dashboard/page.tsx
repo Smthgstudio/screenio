@@ -4,6 +4,7 @@ import Link from "next/link";
 import NewScreenButton from "@/components/NewScreenButton";
 import LogoutButton from "@/components/LogoutButton";
 import ScreenCard from "@/components/ScreenCard";
+import Logo from "@/components/Logo";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -22,7 +23,7 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-[#EDEAE4] text-[#141414]">
       {/* Navbar */}
       <header className="flex items-center justify-between border-b border-black/8 bg-[#EDEAE4] px-6 py-4">
-        <span className="text-sm font-black tracking-tight">Screenio</span>
+        <Logo height={24} />
         <div className="flex items-center gap-3">
           {isAdmin && (
             <Link href="/admin" className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#141414] hover:bg-black/5">

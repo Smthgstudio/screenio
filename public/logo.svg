@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 110" fill="none">
+  <!-- Three screen/page shapes fanning out -->
+  <path d="M10 22 L34 10 L38 80 L12 92 Z" fill="#141414"/>
+  <path d="M44 12 L72 5 L76 84 L46 90 Z" fill="#141414"/>
+  <path d="M82 5 L112 3 L112 85 L82 87 Z" fill="#141414"/>
+  <!-- screenio -->
+  <text x="128" y="84" font-family="'Arial Black', 'Arial', sans-serif" font-weight="900" font-size="80" fill="#141414">screenio</text>
+  <!-- .app -->
+  <text x="546" y="84" font-family="'Arial', sans-serif" font-weight="400" font-size="40" fill="#141414">.app</text>
+</svg>
