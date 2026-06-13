@@ -459,34 +459,33 @@ export default function BentoComposer({ screenId, screenName, initialLayout, pla
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden text-white"
-      style={{ background: "radial-gradient(1200px 700px at 20% 0%,rgba(124,92,255,.25),transparent 55%),radial-gradient(900px 650px at 90% 10%,rgba(0,180,255,.18),transparent 50%),#0b0e14" }}>
+    <div className="flex h-screen overflow-hidden">
 
       {/* Preview FAB */}
       {preview && (
-        <div className="fixed left-3 top-3 z-[9999] flex items-center gap-2 bg-black/70 border border-white/12 rounded-2xl px-3 py-2.5 backdrop-blur-[10px]">
-          <button className="rounded-xl bg-violet-600/18 border border-violet-500/35 text-white px-3 py-2 text-xs font-bold" onClick={() => setPreview(false)}>↩ Quitter preview</button>
-          <span className="text-xs text-white/40">Échap</span>
+        <div className="fixed left-3 top-3 z-[9999] flex items-center gap-2 bg-[#EDEAE4]/90 border border-black/10 rounded-2xl px-3 py-2.5 backdrop-blur-[10px] shadow-sm">
+          <button className="rounded-xl bg-[#C8F15A] px-3 py-2 text-xs font-black text-[#141414]" onClick={() => setPreview(false)}>↩ Quitter preview</button>
+          <span className="text-xs text-[#888880]">Échap</span>
         </div>
       )}
 
       {/* Sidebar */}
       {!preview && (
-        <aside className="w-[280px] shrink-0 flex flex-col border-r border-white/8 bg-gradient-to-b from-white/4 to-white/2 overflow-y-auto">
+        <aside className="w-[270px] shrink-0 flex flex-col border-r border-black/8 bg-[#EDEAE4] overflow-y-auto">
           <div className="p-4 flex flex-col gap-3">
-            <Link href="/dashboard" className="text-xs text-white/40 hover:text-white/70">← Dashboard</Link>
+            <Link href="/dashboard" className="text-xs text-[#888880] hover:text-[#141414]">← Dashboard</Link>
             <input
-              className="bg-transparent text-sm font-black text-white outline-none border-b border-white/10 pb-1 focus:border-violet-500/60"
+              className="bg-transparent text-sm font-black text-[#141414] outline-none border-b border-black/10 pb-1 focus:border-black/30"
               value={name}
               onChange={e => setName(e.target.value)}
               onBlur={e => saveName(e.target.value)}
             />
-            <button className="w-full rounded-xl bg-violet-600/18 border border-violet-500/35 text-white py-2.5 text-sm font-bold hover:bg-violet-600/30"
+            <button className="w-full rounded-xl bg-[#C8F15A] py-2.5 text-sm font-black text-[#141414] hover:bg-[#B8E048]"
               onClick={() => setPreview(true)}>👁 Preview</button>
 
             {/* Widgets */}
-            <div className="rounded-2xl bg-white/4 border border-white/8 p-3">
-              <h3 className="text-[11px] font-black text-white/55 uppercase tracking-[.3px] mb-2.5">Widgets</h3>
+            <div className="rounded-2xl bg-white border border-black/8 p-3">
+              <h3 className="text-[11px] font-black text-[#888880] uppercase tracking-[.3px] mb-2.5">Widgets</h3>
               <div className="flex flex-wrap gap-2">
                 {WIDGET_DEFS.map(({ type, label, icon }) => {
                   const locked = PRO_TYPES.includes(type) && !isPro;
@@ -495,8 +494,8 @@ export default function BentoComposer({ screenId, screenName, initialLayout, pla
                       onClick={() => addWidget(type)}
                       className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
                         locked
-                          ? "border-white/8 bg-white/3 text-white/30 cursor-not-allowed"
-                          : "border-violet-500/35 bg-violet-600/18 text-white hover:bg-violet-600/30"
+                          ? "border-black/8 bg-black/3 text-black/25 cursor-not-allowed"
+                          : "border-black/10 bg-[#141414] text-white hover:bg-black"
                       }`}
                       title={locked ? "Disponible en Pro" : `Ajouter ${label}`}>
                       <span>{icon}</span><span>{label}</span>{locked && <span className="text-[10px]">🔒</span>}
@@ -504,31 +503,31 @@ export default function BentoComposer({ screenId, screenName, initialLayout, pla
                   );
                 })}
               </div>
-              {!isPro && <p className="mt-2 text-[11px] text-white/30">Image, Slideshow et Menu → Plan Pro</p>}
+              {!isPro && <p className="mt-2 text-[11px] text-[#888880]">Image, Slideshow et Menu → Plan Pro</p>}
             </div>
 
             {/* Raccourcis */}
-            <div className="rounded-2xl bg-white/4 border border-white/8 p-3">
-              <h3 className="text-[11px] font-black text-white/55 uppercase tracking-[.3px] mb-2">Raccourcis</h3>
-              <div className="text-[11px] text-white/40 flex flex-col gap-1">
-                <span><kbd className="font-mono px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20">Suppr</kbd> supprimer</span>
-                <span><kbd className="font-mono px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20">Échap</kbd> quitter preview</span>
+            <div className="rounded-2xl bg-white border border-black/8 p-3">
+              <h3 className="text-[11px] font-black text-[#888880] uppercase tracking-[.3px] mb-2">Raccourcis</h3>
+              <div className="text-[11px] text-[#888880] flex flex-col gap-1">
+                <span><kbd className="font-mono px-1.5 py-0.5 rounded-lg border border-black/10 bg-[#EDEAE4]">Suppr</kbd> supprimer</span>
+                <span><kbd className="font-mono px-1.5 py-0.5 rounded-lg border border-black/10 bg-[#EDEAE4]">Échap</kbd> quitter preview</span>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex gap-2 flex-wrap">
-              <button className="rounded-xl border border-white/12 bg-white/6 text-white px-3 py-2 text-xs hover:bg-white/10"
+              <button className="rounded-xl border border-black/8 bg-white text-[#888880] px-3 py-2 text-xs hover:bg-black/5 hover:text-[#141414]"
                 onClick={() => navigator.clipboard.writeText(JSON.stringify({ widgets }, null, 2)).catch(() => {}).then(() => alert("JSON copié !"))}>
                 Export JSON
               </button>
-              <button className="rounded-xl border border-red-500/35 bg-red-500/14 text-red-400 px-3 py-2 text-xs hover:bg-red-500/22"
+              <button className="rounded-xl border border-red-200 bg-red-50 text-red-500 px-3 py-2 text-xs hover:bg-red-100"
                 onClick={() => { if (confirm("Reset layout ?")) setAndSave([]); }}>Reset</button>
             </div>
           </div>
 
-          <div className="mt-auto p-4 border-t border-white/8">
-            <span className={`text-xs font-medium ${saving ? "text-violet-400" : "text-white/25"}`}>
+          <div className="mt-auto p-4 border-t border-black/8">
+            <span className={`text-xs font-medium ${saving ? "text-[#141414]" : "text-[#888880]/40"}`}>
               {saving ? "Sauvegarde…" : "Sauvegardé"}
             </span>
           </div>
@@ -536,13 +535,13 @@ export default function BentoComposer({ screenId, screenName, initialLayout, pla
       )}
 
       {/* Canvas */}
-      <main className={`flex-1 overflow-auto ${preview ? "p-0" : "p-4"}`}>
+      <main className={`flex-1 overflow-auto bg-[#1a1a1a] ${preview ? "p-0" : "p-4"}`}>
         {!preview && (
           <div className="flex items-center gap-2 mb-3">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-2 text-xs text-white/55">
-              <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20">1920×1080</kbd>
-              Grille <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20">4×3</kbd>
-              Snap <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20">ON</kbd>
+              <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20 text-white/70">1920×1080</kbd>
+              Grille <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20 text-white/70">4×3</kbd>
+              Snap <kbd className="font-mono text-[11px] px-1.5 py-0.5 rounded-lg border border-white/14 bg-black/20 text-white/70">ON</kbd>
             </div>
           </div>
         )}

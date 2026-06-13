@@ -14,27 +14,23 @@ interface UserRow {
   blocked: boolean;
 }
 
-const ROLE_LABELS: Record<Role, string> = { admin: "Admin", client: "Payant", user: "Gratuit" };
 const ROLE_STYLES: Record<Role, string> = {
-  admin:  "border-violet-500/40 bg-violet-500/15 text-violet-300",
-  client: "border-emerald-500/40 bg-emerald-500/15 text-emerald-300",
-  user:   "border-white/10 bg-white/5 text-white/50",
+  admin:  "border-black/10 bg-[#C8F15A] text-[#141414]",
+  client: "border-black/10 bg-[#141414] text-white",
+  user:   "border-black/8 bg-white text-[#888880]",
 };
+const ROLE_LABELS: Record<Role, string> = { admin: "Admin", client: "Payant", user: "Gratuit" };
 
 function IconBtn({ onClick, title, disabled, children, danger }: {
   onClick: () => void; title: string; disabled?: boolean; children: React.ReactNode; danger?: boolean;
 }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      className={`w-8 h-8 rounded-lg border grid place-items-center text-sm transition-colors disabled:opacity-40 ${
+    <button onClick={onClick} disabled={disabled} title={title}
+      className={`w-8 h-8 rounded-lg border grid place-items-center text-sm transition-colors disabled:opacity-30 ${
         danger
-          ? "border-red-500/20 bg-red-500/5 text-red-400/60 hover:bg-red-500/15 hover:text-red-400"
-          : "border-white/10 bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/80"
-      }`}
-    >
+          ? "border-red-200 bg-red-50 text-red-400 hover:bg-red-100"
+          : "border-black/8 bg-white text-[#888880] hover:bg-black/5 hover:text-[#141414]"
+      }`}>
       {children}
     </button>
   );
@@ -51,49 +47,45 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      try {
-        await createUser(email, password, role);
-        onClose();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur");
-      }
+      try { await createUser(email, password, role); onClose(); }
+      catch (err) { setError(err instanceof Error ? err.message : "Erreur"); }
     });
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0f1117] p-6">
-        <h2 className="mb-5 text-sm font-black">Ajouter un utilisateur</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+      <div className="w-full max-w-sm rounded-2xl border border-black/10 bg-[#EDEAE4] p-6 shadow-xl">
+        <h2 className="mb-5 text-lg font-black text-[#141414]">Ajouter un utilisateur</h2>
         <form onSubmit={submit} className="flex flex-col gap-3">
           <div>
-            <label className="block text-xs text-white/50 mb-1">Email</label>
+            <label className="block text-xs font-semibold text-[#888880] uppercase tracking-wide mb-1">Email</label>
             <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/60"
+              className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-[#141414] outline-none focus:border-black/25"
               placeholder="email@exemple.com" />
           </div>
           <div>
-            <label className="block text-xs text-white/50 mb-1">Mot de passe</label>
+            <label className="block text-xs font-semibold text-[#888880] uppercase tracking-wide mb-1">Mot de passe</label>
             <input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none focus:border-violet-500/60"
+              className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-[#141414] outline-none focus:border-black/25"
               placeholder="6 caractères minimum" />
           </div>
           <div>
-            <label className="block text-xs text-white/50 mb-1">Rôle</label>
+            <label className="block text-xs font-semibold text-[#888880] uppercase tracking-wide mb-1">Rôle</label>
             <select value={role} onChange={e => setRole(e.target.value as Role)}
-              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none">
+              className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm text-[#141414] outline-none">
               <option value="user">Gratuit</option>
               <option value="client">Payant</option>
               <option value="admin">Admin</option>
             </select>
           </div>
-          {error && <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-400">{error}</p>}
+          {error && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>}
           <div className="flex gap-2 mt-1">
             <button type="submit" disabled={pending}
-              className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white hover:bg-violet-500 disabled:opacity-50">
-              {pending ? "Création…" : "Créer"}
+              className="flex-1 rounded-xl bg-[#C8F15A] py-2.5 text-sm font-black text-[#141414] hover:bg-[#B8E048] disabled:opacity-50">
+              {pending ? "Création…" : "Créer →"}
             </button>
             <button type="button" onClick={onClose}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/60 hover:bg-white/10">
+              className="rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-[#888880] hover:bg-black/5">
               Annuler
             </button>
           </div>
@@ -122,10 +114,7 @@ export default function AdminUserTable({ users }: { users: UserRow[] }) {
 
   function handlePasswordReset(userId: string, email: string | null) {
     if (!email) return;
-    startTransition(async () => {
-      await sendPasswordReset(email);
-      flash(userId, "Email envoyé ✓");
-    });
+    startTransition(async () => { await sendPasswordReset(email); flash(userId, "Email envoyé ✓"); });
   }
 
   function handleToggleBlock(userId: string, blocked: boolean) {
@@ -146,84 +135,73 @@ export default function AdminUserTable({ users }: { users: UserRow[] }) {
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} />}
 
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-xs font-black uppercase tracking-wide text-white/40">
+        <h2 className="text-xs font-black uppercase tracking-wide text-[#888880]">
           {rows.length} utilisateur{rows.length !== 1 ? "s" : ""}
         </h2>
         <button onClick={() => setShowCreate(true)}
-          className="text-xs text-white/30 hover:text-violet-400 transition-colors underline underline-offset-2">
+          className="text-xs text-[#888880] hover:text-[#141414] transition-colors underline underline-offset-2">
           + Ajouter manuellement
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/8">
+      <div className="overflow-x-auto rounded-2xl border border-black/8 bg-white">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/8 bg-white/3">
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-white/40">Utilisateur</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-white/40">Rôle</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-white/40">Statut</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-white/40">Écrans</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-white/40">Inscrit le</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-white/40">Actions</th>
+            <tr className="border-b border-black/6 bg-black/2">
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-[#888880]">Utilisateur</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-[#888880]">Rôle</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-[#888880]">Statut</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-[#888880]">Écrans</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-[#888880]">Inscrit le</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wide text-[#888880]">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-black/4">
             {rows.map(u => (
-              <tr key={u.id} className={`transition-colors ${u.blocked ? "bg-red-500/3" : "hover:bg-white/2"}`}>
+              <tr key={u.id} className={`transition-colors ${u.blocked ? "bg-red-50/50" : "hover:bg-black/1"}`}>
                 <td className="px-4 py-3.5">
-                  <span className={`font-medium ${u.blocked ? "text-white/40 line-through" : "text-white/80"}`}>
+                  <span className={`font-medium ${u.blocked ? "text-black/30 line-through" : "text-[#141414]"}`}>
                     {u.email ?? "—"}
                   </span>
                 </td>
-
                 <td className="px-4 py-3.5">
                   <select value={u.role} disabled={pending}
                     onChange={e => handleRoleChange(u.id, e.target.value as Role)}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold bg-transparent cursor-pointer outline-none ${ROLE_STYLES[u.role]}`}>
-                    <option value="user"   className="bg-[#0b0e14] text-white">Gratuit</option>
-                    <option value="client" className="bg-[#0b0e14] text-white">Payant</option>
-                    <option value="admin"  className="bg-[#0b0e14] text-white">Admin</option>
+                    className={`rounded-full border px-3 py-1 text-xs font-bold cursor-pointer outline-none ${ROLE_STYLES[u.role]}`}>
+                    <option value="user">Gratuit</option>
+                    <option value="client">Payant</option>
+                    <option value="admin">Admin</option>
                   </select>
                 </td>
-
                 <td className="px-4 py-3.5">
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    u.blocked
-                      ? "bg-red-500/10 text-red-400"
-                      : "bg-emerald-500/10 text-emerald-400"
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold border ${
+                    u.blocked ? "border-red-200 bg-red-50 text-red-500" : "border-green-200 bg-green-50 text-green-600"
                   }`}>
                     {u.blocked ? "Bloqué" : "Actif"}
                   </span>
                 </td>
-
-                <td className="px-4 py-3.5 text-white/40">{u.screens_count}</td>
-
-                <td className="px-4 py-3.5 text-xs text-white/35">
+                <td className="px-4 py-3.5 text-[#888880]">{u.screens_count}</td>
+                <td className="px-4 py-3.5 text-xs text-[#888880]">
                   {new Date(u.created_at).toLocaleDateString("fr-FR")}
                 </td>
-
                 <td className="px-4 py-3.5">
                   {confirmDelete === u.id ? (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-red-400">Confirmer ?</span>
-                      <button onClick={() => handleDelete(u.id)} disabled={pending} className="text-xs font-bold text-red-400 hover:text-red-300">Oui</button>
-                      <button onClick={() => setConfirmDelete(null)} className="text-xs text-white/40 hover:text-white">Non</button>
+                      <span className="text-xs text-red-500">Confirmer ?</span>
+                      <button onClick={() => handleDelete(u.id)} disabled={pending} className="text-xs font-bold text-red-500 hover:text-red-700">Oui</button>
+                      <button onClick={() => setConfirmDelete(null)} className="text-xs text-[#888880] hover:text-[#141414]">Non</button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5">
                       {feedback?.id === u.id ? (
-                        <span className="text-xs text-emerald-400">{feedback.msg}</span>
+                        <span className="text-xs text-green-600">{feedback.msg}</span>
                       ) : (
                         <>
-                          <IconBtn onClick={() => handlePasswordReset(u.id, u.email)} title="Envoyer un email de réinitialisation" disabled={pending}>
-                            ✉
-                          </IconBtn>
+                          <IconBtn onClick={() => handlePasswordReset(u.id, u.email)} title="Réinitialiser le mot de passe" disabled={pending}>✉</IconBtn>
                           <IconBtn onClick={() => handleToggleBlock(u.id, u.blocked)} title={u.blocked ? "Débloquer" : "Bloquer"} disabled={pending}>
                             {u.blocked ? "🔓" : "🔒"}
                           </IconBtn>
-                          <IconBtn onClick={() => setConfirmDelete(u.id)} title="Supprimer" disabled={pending} danger>
-                            ✕
-                          </IconBtn>
+                          <IconBtn onClick={() => setConfirmDelete(u.id)} title="Supprimer" disabled={pending} danger>✕</IconBtn>
                         </>
                       )}
                     </div>
@@ -233,10 +211,7 @@ export default function AdminUserTable({ users }: { users: UserRow[] }) {
             ))}
           </tbody>
         </table>
-
-        {rows.length === 0 && (
-          <div className="py-16 text-center text-sm text-white/30">Aucun utilisateur</div>
-        )}
+        {rows.length === 0 && <div className="py-16 text-center text-sm text-[#888880]">Aucun utilisateur</div>}
       </div>
     </>
   );

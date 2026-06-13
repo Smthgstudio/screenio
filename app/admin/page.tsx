@@ -42,18 +42,18 @@ export default async function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0e14] text-white">
-      <header className="flex items-center justify-between border-b border-white/8 px-6 py-4">
+    <div className="min-h-screen bg-[#EDEAE4] text-[#141414]">
+      <header className="flex items-center justify-between border-b border-black/8 bg-[#EDEAE4] px-6 py-4">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm text-white/40 hover:text-white/70">← Dashboard</Link>
-          <span className="text-white/20">/</span>
+          <Link href="/dashboard" className="text-sm text-[#888880] hover:text-[#141414]">← Dashboard</Link>
+          <span className="text-black/20">/</span>
           <span className="text-sm font-black">Admin</span>
         </div>
-        <span className="rounded-full border border-violet-500/40 bg-violet-500/15 px-3 py-1 text-xs font-bold text-violet-300">Admin</span>
+        <span className="rounded-full border border-black/10 bg-[#C8F15A] px-3 py-1 text-xs font-bold text-[#141414]">Admin</span>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="mb-8 text-2xl font-black">Gestion des utilisateurs</h1>
+      <main className="mx-auto max-w-6xl px-6 py-12">
+        <h1 className="mb-8 text-4xl font-black tracking-tight">Gestion des utilisateurs</h1>
 
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
@@ -62,9 +62,9 @@ export default async function AdminPage() {
             { label: "Gratuits", value: stats.free },
             { label: "Bloqués", value: stats.blocked, danger: stats.blocked > 0 },
           ].map(s => (
-            <div key={s.label} className={`rounded-2xl border px-5 py-4 ${s.danger ? "border-red-500/20 bg-red-500/5" : "border-white/8 bg-white/3"}`}>
-              <p className={`text-2xl font-black ${s.danger ? "text-red-400" : "text-white"}`}>{s.value}</p>
-              <p className="mt-0.5 text-xs text-white/40">{s.label}</p>
+            <div key={s.label} className={`rounded-2xl border px-5 py-4 ${s.danger && s.value > 0 ? "border-red-200 bg-red-50" : "border-black/8 bg-white"}`}>
+              <p className={`text-3xl font-black ${s.danger && s.value > 0 ? "text-red-500" : "text-[#141414]"}`}>{s.value}</p>
+              <p className="mt-0.5 text-xs text-[#888880]">{s.label}</p>
             </div>
           ))}
         </div>

@@ -18,67 +18,55 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      router.push("/dashboard");
-      router.refresh();
-    }
+    if (error) { setError(error.message); setLoading(false); }
+    else { router.push("/dashboard"); router.refresh(); }
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0b0e14] px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-2 text-2xl font-black text-white">Screenio</h1>
-        <p className="mb-8 text-sm text-white/50">Connecte-toi à ton espace</p>
+    <main className="flex min-h-screen bg-[#EDEAE4]">
+      {/* Left — branding */}
+      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 border-r border-black/8">
+        <span className="text-sm font-black tracking-tight text-[#141414]">Screenio</span>
+        <div>
+          <p className="text-[56px] font-black leading-[1.05] tracking-tight text-[#141414]">
+            Transformez vos écrans en outils marketing puissants.
+          </p>
+        </div>
+        <span className="text-xs text-[#888880]">© 2026 Screenio</span>
+      </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-white/60 uppercase tracking-wide">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/40"
-              placeholder="toi@exemple.com"
-            />
-          </div>
+      {/* Right — form */}
+      <div className="flex flex-1 flex-col justify-center px-8 py-12 lg:px-16">
+        <div className="w-full max-w-sm mx-auto">
+          <span className="lg:hidden block text-sm font-black tracking-tight text-[#141414] mb-10">Screenio</span>
+          <h1 className="text-2xl font-black text-[#141414] mb-1">Connexion</h1>
+          <p className="text-sm text-[#888880] mb-8">Accède à ton espace</p>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-white/60 uppercase tracking-wide">Mot de passe</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/40"
-              placeholder="••••••••"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#888880] uppercase tracking-wide">Email</label>
+              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-[#141414] outline-none placeholder:text-black/25 focus:border-black/30 focus:ring-2 focus:ring-black/5"
+                placeholder="toi@exemple.com" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-semibold text-[#888880] uppercase tracking-wide">Mot de passe</label>
+              <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                className="rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-[#141414] outline-none placeholder:text-black/25 focus:border-black/30 focus:ring-2 focus:ring-black/5"
+                placeholder="••••••••" />
+            </div>
+            {error && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
+            <button type="submit" disabled={loading}
+              className="mt-1 rounded-xl bg-[#C8F15A] px-6 py-3 text-sm font-black text-[#141414] transition-colors hover:bg-[#B8E048] disabled:opacity-50">
+              {loading ? "Connexion…" : "Se connecter →"}
+            </button>
+          </form>
 
-          {error && (
-            <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-1 rounded-xl bg-violet-600 py-3 text-sm font-bold text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
-          >
-            {loading ? "Connexion…" : "Se connecter"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-white/40">
-          Pas encore de compte ?{" "}
-          <Link href="/signup" className="font-semibold text-violet-400 hover:text-violet-300">
-            S&apos;inscrire
-          </Link>
-        </p>
+          <p className="mt-6 text-sm text-[#888880]">
+            Pas encore de compte ?{" "}
+            <Link href="/signup" className="font-semibold text-[#141414] underline underline-offset-2 hover:text-black">S&apos;inscrire</Link>
+          </p>
+        </div>
       </div>
     </main>
   );
