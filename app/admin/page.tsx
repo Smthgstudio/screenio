@@ -14,11 +14,16 @@ export default async function AdminPage() {
 
   const admin = createAdminClient();
 
-  // Fetch all profiles + screen counts
-  const { data: profiles } = await admin
-    .from("profiles")
-    .select("id, email, role, created_at, screens(count)")
-    .order("created_at", { ascending: false });
+  const [{ data: profiles }, { data: authData }] = await Promise.all([
+    admin.from("profiles").select("id, email, role, created_at, screens(count)").order("created_at", { ascending: false }),
+    admin.auth.admin.listUsers({ perPage: 1000 }),
+  ]);
+
+  const bannedIds = new Set(
+    (authData?.users ?? [])
+      .filter(u => u.banned_until && new Date(u.banned_until) > new Date())
+      .map(u => u.id)
+  );
 
   const users = (profiles ?? []).map(p => ({
     id: p.id,
@@ -26,12 +31,14 @@ export default async function AdminPage() {
     role: p.role as "user" | "client" | "admin",
     created_at: p.created_at,
     screens_count: (p.screens as unknown as { count: number }[])?.[0]?.count ?? 0,
+    blocked: bannedIds.has(p.id),
   }));
 
   const stats = {
     total: users.length,
     clients: users.filter(u => u.role === "client").length,
-    admins: users.filter(u => u.role === "admin").length,
+    blocked: users.filter(u => u.blocked).length,
+    free: users.filter(u => u.role === "user").length,
   };
 
   return (
@@ -46,27 +53,20 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="mb-8 text-2xl font-black">Panneau d&apos;administration</h1>
+        <h1 className="mb-8 text-2xl font-black">Gestion des utilisateurs</h1>
 
-        {/* Stats */}
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Utilisateurs total", value: stats.total },
-            { label: "Clients (payants)", value: stats.clients },
-            { label: "Administrateurs", value: stats.admins },
-            { label: "Gratuits", value: stats.total - stats.clients - stats.admins },
+            { label: "Total", value: stats.total },
+            { label: "Clients payants", value: stats.clients },
+            { label: "Gratuits", value: stats.free },
+            { label: "Bloqués", value: stats.blocked, danger: stats.blocked > 0 },
           ].map(s => (
-            <div key={s.label} className="rounded-2xl border border-white/8 bg-white/3 px-5 py-4">
-              <p className="text-2xl font-black text-white">{s.value}</p>
+            <div key={s.label} className={`rounded-2xl border px-5 py-4 ${s.danger ? "border-red-500/20 bg-red-500/5" : "border-white/8 bg-white/3"}`}>
+              <p className={`text-2xl font-black ${s.danger ? "text-red-400" : "text-white"}`}>{s.value}</p>
               <p className="mt-0.5 text-xs text-white/40">{s.label}</p>
             </div>
           ))}
-        </div>
-
-        {/* User table */}
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-black text-white/70 uppercase tracking-wide">Tous les utilisateurs</h2>
-          <p className="text-xs text-white/30">Le changement de rôle est immédiat</p>
         </div>
 
         <AdminUserTable users={users} />
