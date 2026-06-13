@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
 // ── Types ───────────────────────────────────────────────────────────────────
-type WidgetType = "text" | "image" | "slideshow" | "menu";
+type WidgetType = "text" | "image" | "slideshow" | "menu" | "video" | "clock";
 type Plan = "free" | "client" | "admin";
 
 interface WidgetData {
@@ -17,6 +17,10 @@ interface WidgetData {
   fadeMs?: number;
   activeIndex?: number;
   items?: string;
+  videoUrl?: string;
+  fontFamily?: string;
+  showSeconds?: boolean;
+  fontSize?: number;
 }
 
 interface Widget {
@@ -32,7 +36,7 @@ interface Widget {
 // ── Constants ───────────────────────────────────────────────────────────────
 const COLS = 4;
 const ROWS = 3;
-const PRO_TYPES: WidgetType[] = ["image", "slideshow", "menu"];
+const PRO_TYPES: WidgetType[] = ["image", "slideshow", "menu", "video", "clock"];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function uid() { return Math.random().toString(36).slice(2, 10); }
@@ -78,6 +82,8 @@ function makeWidget(type: WidgetType, widgets: Widget[], z: number): Widget {
   if (type === "image")     { base.title = "Visuel";    base.w = 2; base.h = 2; base.data = { url: "" }; }
   if (type === "slideshow") { base.title = "Slideshow"; base.w = 2; base.h = 2; base.data = { images: [], holdMs: 3000, fadeMs: 700, activeIndex: 0 }; }
   if (type === "menu")      { base.title = "Menu";      base.w = 2; base.h = 2; base.data = { items: "Plat du jour — 12€\nTarte flambée — 9€\nDessert — 5€" }; }
+  if (type === "video")     { base.title = "Vidéo";     base.w = 2; base.h = 2; base.data = { videoUrl: "" }; }
+  if (type === "clock")     { base.title = "Horloge";   base.w = 1; base.h = 1; base.data = { fontFamily: "Inter", showSeconds: true, fontSize: 48 }; }
   const spot = findFirstFit(widgets, base.w, base.h);
   if (spot) { base.x = spot.x; base.y = spot.y; }
   return base;
@@ -146,7 +152,58 @@ function WidgetBody({ w, slideshowIdx, preview }: { w: Widget; slideshowIdx: num
       </div>
     );
   }
+
+  if (w.type === "video") {
+    const url = (w.data.videoUrl ?? "").trim();
+    if (!url && preview) return null;
+    return (
+      <div className={`absolute ${preview ? "inset-0 rounded-[inherit]" : "inset-2.5 rounded-[14px]"} overflow-hidden bg-black`}>
+        {url
+          ? <video src={url} autoPlay loop muted playsInline className="w-full h-full object-cover" />
+          : <div className="w-full h-full grid place-items-center text-xs text-white/40">Aucune vidéo — ouvre ⚙</div>
+        }
+      </div>
+    );
+  }
+
+  if (w.type === "clock") {
+    return <ClockWidget fontFamily={w.data.fontFamily ?? "Inter"} showSeconds={w.data.showSeconds ?? true} fontSize={w.data.fontSize ?? 48} />;
+  }
+
   return null;
+}
+
+function ClockWidget({ fontFamily, showSeconds, fontSize }: { fontFamily: string; showSeconds: boolean; fontSize: number }) {
+  const [time, setTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!fontFamily || fontFamily === "Inter") return;
+    const id = `gf-${fontFamily.replace(/\s+/g, "-")}`;
+    if (!document.getElementById(id)) {
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}&display=swap`;
+      document.head.appendChild(link);
+    }
+  }, [fontFamily]);
+
+  const hh = String(time.getHours()).padStart(2, "0");
+  const mm = String(time.getMinutes()).padStart(2, "0");
+  const ss = String(time.getSeconds()).padStart(2, "0");
+
+  return (
+    <div className="w-full h-full flex items-center justify-center p-3">
+      <span style={{ fontFamily: `'${fontFamily}', sans-serif`, fontSize: `clamp(24px, ${fontSize / 10}vw, ${fontSize}px)`, lineHeight: 1 }} className="font-bold text-white tabular-nums">
+        {hh}:{mm}{showSeconds && <span className="opacity-60">:{ss}</span>}
+      </span>
+    </div>
+  );
 }
 
 // ── Config fields ────────────────────────────────────────────────────────────
@@ -215,6 +272,43 @@ function TypeConfig({ type, data, onChange }: { type: WidgetType; data: WidgetDa
         value={data.items ?? ""} onChange={e => onChange({ ...data, items: e.target.value })} />
     </>
   );
+
+  if (type === "video") return (
+    <div className="flex flex-col gap-2">
+      <label className="block text-[11px] text-white/55 mb-1">URL de la vidéo (mp4, webm)</label>
+      <input className="w-full rounded-xl border border-white/10 bg-black/25 text-white px-2.5 py-2 text-xs outline-none"
+        placeholder="https://exemple.com/video.mp4"
+        value={data.videoUrl ?? ""}
+        onChange={e => onChange({ ...data, videoUrl: e.target.value })} />
+      <p className="text-[11px] text-white/35">La vidéo sera lue en boucle, sans son.</p>
+    </div>
+  );
+
+  if (type === "clock") return (
+    <div className="flex flex-col gap-2">
+      <div>
+        <label className="block text-[11px] text-white/55 mb-1">Google Font</label>
+        <input className="w-full rounded-xl border border-white/10 bg-black/25 text-white px-2.5 py-2 text-xs outline-none"
+          placeholder="ex: Playfair Display, Oswald, Roboto…"
+          value={data.fontFamily ?? "Inter"}
+          onChange={e => onChange({ ...data, fontFamily: e.target.value })} />
+        <p className="text-[11px] text-white/35 mt-1">Tape le nom exact d&apos;une Google Font.</p>
+      </div>
+      <div>
+        <label className="block text-[11px] text-white/55 mb-1">Taille (px)</label>
+        <input type="number" min="20" max="300" step="4"
+          className="w-full rounded-xl border border-white/10 bg-black/25 text-white px-2.5 py-2 text-xs outline-none"
+          value={data.fontSize ?? 48}
+          onChange={e => onChange({ ...data, fontSize: Number(e.target.value) })} />
+      </div>
+      <label className="flex items-center gap-2 text-[11px] text-white/55 cursor-pointer">
+        <input type="checkbox" checked={data.showSeconds ?? true}
+          onChange={e => onChange({ ...data, showSeconds: e.target.checked })} />
+        Afficher les secondes
+      </label>
+    </div>
+  );
+
   return null;
 }
 
@@ -452,10 +546,12 @@ export default function BentoComposer({ screenId, screenName, initialLayout, pla
   }, [preview, selectedId, widgets]);
 
   const WIDGET_DEFS: { type: WidgetType; label: string; icon: string }[] = [
-    { type: "text",      label: "Texte",     icon: "T" },
-    { type: "image",     label: "Image",     icon: "🖼" },
-    { type: "slideshow", label: "Slideshow", icon: "▶" },
-    { type: "menu",      label: "Menu",      icon: "≡" },
+    { type: "text",      label: "Texte",    icon: "T" },
+    { type: "image",     label: "Image",    icon: "🖼" },
+    { type: "slideshow", label: "Diaporama",icon: "▶" },
+    { type: "video",     label: "Vidéo",    icon: "🎬" },
+    { type: "menu",      label: "Menu",     icon: "≡" },
+    { type: "clock",     label: "Horloge",  icon: "🕐" },
   ];
 
   return (
@@ -516,14 +612,10 @@ export default function BentoComposer({ screenId, screenName, initialLayout, pla
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 flex-wrap">
-              <button className="rounded-xl border border-black/8 bg-white text-[#888880] px-3 py-2 text-xs hover:bg-black/5 hover:text-[#141414]"
-                onClick={() => navigator.clipboard.writeText(JSON.stringify({ widgets }, null, 2)).catch(() => {}).then(() => alert("JSON copié !"))}>
-                Export JSON
-              </button>
-              <button className="rounded-xl border border-red-200 bg-red-50 text-red-500 px-3 py-2 text-xs hover:bg-red-100"
-                onClick={() => { if (confirm("Reset layout ?")) setAndSave([]); }}>Reset</button>
-            </div>
+            <button className="rounded-xl border border-red-200 bg-red-50 text-red-500 px-3 py-2 text-xs hover:bg-red-100 w-full"
+              onClick={() => { if (confirm("Remettre le layout à zéro ?")) setAndSave([]); }}>
+              Réinitialiser le layout
+            </button>
           </div>
 
           <div className="mt-auto p-4 border-t border-black/8">

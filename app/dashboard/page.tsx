@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import NewScreenButton from "@/components/NewScreenButton";
 import LogoutButton from "@/components/LogoutButton";
+import ScreenCard from "@/components/ScreenCard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -68,18 +69,7 @@ export default async function DashboardPage() {
         {screens && screens.length > 0 ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {screens.map((screen) => (
-              <Link key={screen.id} href={`/screen/${screen.id}`}
-                className="group flex flex-col gap-3 rounded-2xl border border-black/8 bg-white p-5 transition-all hover:border-black/20 hover:shadow-sm">
-                <div className="aspect-video w-full rounded-xl border border-black/6 bg-[#EDEAE4] grid place-items-center">
-                  <span className="text-2xl opacity-20">⬜</span>
-                </div>
-                <div>
-                  <p className="font-bold text-[#141414] group-hover:text-black">{screen.name}</p>
-                  <p className="mt-0.5 text-xs text-[#888880]">
-                    Modifié le {new Date(screen.updated_at).toLocaleDateString("fr-FR")}
-                  </p>
-                </div>
-              </Link>
+              <ScreenCard key={screen.id} id={screen.id} name={screen.name} updatedAt={screen.updated_at} />
             ))}
           </div>
         ) : (
