@@ -11,11 +11,11 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const [{ data: profile }, { data: screens }] = await Promise.all([
-    supabase.from("profiles").select("plan").single(),
+    supabase.from("profiles").select("plan, role").single(),
     supabase.from("screens").select("id, name, updated_at").order("updated_at", { ascending: false }),
   ]);
 
-  const isPro = profile?.plan === "pro";
+  const isPro = profile?.role === "admin" || profile?.role === "client" || profile?.plan === "pro";
 
   return (
     <div className="min-h-screen bg-[#0b0e14] text-white">
