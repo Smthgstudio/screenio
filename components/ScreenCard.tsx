@@ -16,6 +16,7 @@ export default function ScreenCard({ id, name, updatedAt }: Props) {
   const router = useRouter();
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
@@ -23,6 +24,14 @@ export default function ScreenCard({ id, name, updatedAt }: Props) {
     setDeleting(true);
     await supabase.from("screens").delete().eq("id", id);
     router.refresh();
+  }
+
+  function handleCopyBroadcast(e: React.MouseEvent) {
+    e.preventDefault();
+    const url = `${window.location.origin}/broadcast/screen/${id}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -39,20 +48,29 @@ export default function ScreenCard({ id, name, updatedAt }: Props) {
         </div>
       </Link>
 
-      {/* Delete button */}
-      <button
-        onClick={handleDelete}
-        disabled={deleting}
-        onBlur={() => setTimeout(() => setConfirm(false), 200)}
-        className={`absolute top-3 right-3 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all
-          opacity-0 group-hover:opacity-100
-          ${confirm
-            ? "border-red-200 bg-red-50 text-red-500 opacity-100"
-            : "border-black/8 bg-white text-[#888880] hover:border-red-200 hover:bg-red-50 hover:text-red-500"
-          }`}
-      >
-        {deleting ? "…" : confirm ? "Confirmer ?" : "Supprimer"}
-      </button>
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-1 border-t border-black/6">
+        <button
+          onClick={handleCopyBroadcast}
+          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors flex-1 justify-center ${
+            copied
+              ? "border-green-200 bg-green-50 text-green-700"
+              : "border-black/8 bg-[#EDEAE4] text-[#888880] hover:text-[#141414]"
+          }`}>
+          {copied ? "Copié ✓" : "📡 Copier l'URL"}
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          onBlur={() => setTimeout(() => setConfirm(false), 200)}
+          className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+            confirm
+              ? "border-red-200 bg-red-50 text-red-500"
+              : "border-black/8 bg-white text-[#888880] hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+          }`}>
+          {deleting ? "…" : confirm ? "Confirmer ?" : "Supprimer"}
+        </button>
+      </div>
     </div>
   );
 }
