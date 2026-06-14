@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useTransition } from "react";
-import { addSchedule, updateSchedule, deleteSchedule } from "@/app/folders/[id]/actions";
+import { addSchedule, updateSchedule, deleteSchedule, splitSchedule } from "@/app/folders/[id]/actions";
 import Link from "next/link";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -32,7 +32,9 @@ interface Folder { id: string; name: string; slug: string; schedules: Schedule[]
 interface Screen { id: string; name: string; }
 interface DragState {
   type: "move" | "resize"; scheduleId: string;
+  dayIndex: number; // which day row was dragged
   startX: number; origStartMin: number; origEndMin: number;
+  moved: boolean; // true once pointer has actually moved
 }
 interface AddState { day: number; startMin: number; endMin: number; }
 
@@ -208,6 +210,8 @@ export default function ScheduleTimeline({ folders, screens }: {
     const deltaX = e.clientX - drag.startX;
     const deltaMin = snapMin((deltaX / rect.width) * TOTAL_MINUTES);
 
+    if (!dragRef.current!.moved) dragRef.current!.moved = true;
+
     setSchedulesByFolder(prev => {
       const list = prev[activeFolderId] ?? [];
       return {
@@ -230,12 +234,46 @@ export default function ScheduleTimeline({ folders, screens }: {
   const handlePointerUp = useCallback(() => {
     const drag = dragRef.current;
     dragRef.current = null;
-    if (!drag) return;
+    if (!drag || !drag.moved) return;
 
     const list = schedulesRef.current[activeFolderId] ?? [];
     const s = list.find(sc => sc.id === drag.scheduleId);
     if (!s) return;
-    startTransition(() => updateSchedule(activeFolderId, s.id, s.days, s.all_day, minToTime(s.startMin), minToTime(s.endMin)));
+
+    const isMultiDay = s.days.length > 1;
+
+    if (isMultiDay) {
+      // Detach dragged day into its own independent schedule
+      const remainingDays = s.days.filter(d => d !== drag.dayIndex);
+      const newStart = minToTime(s.startMin);
+      const newEnd = minToTime(s.endMin);
+
+      // Optimistic: update local state immediately
+      setSchedulesByFolder(prev => {
+        const cur = prev[activeFolderId] ?? [];
+        return {
+          ...prev,
+          [activeFolderId]: cur.map(sc =>
+            sc.id === s.id ? { ...sc, days: remainingDays } : sc
+          ).concat([{
+            ...s,
+            id: `temp-${Date.now()}`, // temp id, will be replaced on refresh
+            days: [drag.dayIndex],
+            start_time: newStart,
+            end_time: newEnd,
+          }]),
+        };
+      });
+
+      startTransition(async () => {
+        await splitSchedule(activeFolderId, s.id, drag.dayIndex, newStart, newEnd);
+      });
+    } else {
+      // Single day — simple update
+      startTransition(() =>
+        updateSchedule(activeFolderId, s.id, s.days, s.all_day, minToTime(s.startMin), minToTime(s.endMin))
+      );
+    }
   }, [activeFolderId]);
 
   useEffect(() => {
@@ -247,12 +285,12 @@ export default function ScheduleTimeline({ folders, screens }: {
     };
   }, [handlePointerMove, handlePointerUp]);
 
-  function startDrag(e: React.PointerEvent, scheduleId: string, type: "move" | "resize") {
+  function startDrag(e: React.PointerEvent, scheduleId: string, type: "move" | "resize", dayIndex: number) {
     e.stopPropagation();
     const s = schedules.find(sc => sc.id === scheduleId);
     if (!s || s.all_day) return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    dragRef.current = { type, scheduleId, startX: e.clientX, origStartMin: s.startMin, origEndMin: s.endMin };
+    dragRef.current = { type, scheduleId, dayIndex, startX: e.clientX, origStartMin: s.startMin, origEndMin: s.endMin, moved: false };
     setSelectedId(scheduleId);
   }
 
@@ -436,14 +474,21 @@ export default function ScheduleTimeline({ folders, screens }: {
                       <div key={s.id}
                         className={`absolute top-[5px] bottom-[5px] rounded-xl flex items-center overflow-hidden cursor-grab active:cursor-grabbing transition-all select-none ${isSelected ? "z-10 ring-2 ring-white ring-offset-1 shadow-lg" : "z-0 shadow-sm hover:shadow-md hover:brightness-110"}`}
                         style={{ left: pct(s.startMin), width: widthPct(s.startMin, s.endMin), background: c.bg, border: `1px solid ${c.dark}` }}
-                        onPointerDown={e => startDrag(e, s.id, "move")}
+                        onPointerDown={e => startDrag(e, s.id, "move", dayIndex)}
                         onClick={e => { e.stopPropagation(); setSelectedId(s.id); }}>
 
                         {/* Content */}
                         <div className="flex-1 min-w-0 px-2.5">
-                          <p className="text-white font-bold truncate" style={{ fontSize: narrow ? 9 : 11 }}>
-                            {s.screen_name}
-                          </p>
+                          <div className="flex items-center gap-1">
+                            <p className="text-white font-bold truncate" style={{ fontSize: narrow ? 9 : 11 }}>
+                              {s.screen_name}
+                            </p>
+                            {s.days.length > 1 && !narrow && (
+                              <span className="shrink-0 rounded-full bg-white/20 px-1 text-white/80" style={{ fontSize: 8 }}>
+                                ×{s.days.length}j
+                              </span>
+                            )}
+                          </div>
                           {!narrow && (
                             <p className="text-white/70 font-mono truncate" style={{ fontSize: 9 }}>
                               {s.all_day ? "Toute la journée" : `${minToLabel(s.startMin)} → ${minToLabel(s.endMin)}`}
@@ -455,7 +500,7 @@ export default function ScheduleTimeline({ folders, screens }: {
                         {!s.all_day && (
                           <div
                             className="absolute right-0 top-0 bottom-0 w-3 flex items-center justify-center cursor-ew-resize hover:bg-white/20 rounded-r-xl"
-                            onPointerDown={e => { e.stopPropagation(); startDrag(e, s.id, "resize"); }}
+                            onPointerDown={e => { e.stopPropagation(); startDrag(e, s.id, "resize", dayIndex); }}
                             onClick={e => e.stopPropagation()}>
                             <div className="w-0.5 h-4 rounded-full bg-white/50" />
                           </div>

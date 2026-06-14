@@ -66,6 +66,44 @@ export async function deleteSchedule(folderId: string, scheduleId: string) {
   revalidatePath("/schedule");
 }
 
+// Split a multi-day schedule: detach one day into its own schedule with new times
+export async function splitSchedule(
+  folderId: string,
+  scheduleId: string,
+  detachDay: number,
+  newStartTime: string,
+  newEndTime: string,
+): Promise<string | null> {
+  const supabase = await assertOwner(folderId);
+
+  // Get the original schedule
+  const { data: orig } = await supabase.from("schedules").select("*").eq("id", scheduleId).single();
+  if (!orig) throw new Error("Créneau introuvable");
+
+  const remainingDays = (orig.days as number[]).filter(d => d !== detachDay);
+
+  // Update original to remove the detached day (or delete if now empty)
+  if (remainingDays.length === 0) {
+    await supabase.from("schedules").delete().eq("id", scheduleId);
+  } else {
+    await supabase.from("schedules").update({ days: remainingDays }).eq("id", scheduleId);
+  }
+
+  // Create new single-day schedule with new times
+  const { data, error } = await supabase.from("schedules").insert({
+    folder_id: folderId,
+    screen_id: orig.screen_id,
+    days: [detachDay],
+    all_day: false,
+    start_time: newStartTime,
+    end_time: newEndTime,
+  }).select("id").single();
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/schedule");
+  return data?.id ?? null;
+}
+
 export async function deleteFolder(folderId: string) {
   const supabase = await assertOwner(folderId);
   await supabase.from("folders").delete().eq("id", folderId);
