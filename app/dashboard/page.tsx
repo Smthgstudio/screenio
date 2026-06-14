@@ -27,6 +27,9 @@ export default async function DashboardPage() {
       <header className="flex items-center justify-between border-b border-black/8 bg-[#EDEAE4] px-6 py-4">
         <Logo height={24} />
         <div className="flex items-center gap-3">
+          <Link href="/schedule" className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#141414] hover:bg-black/5">
+            Programmation
+          </Link>
           {isAdmin && (
             <Link href="/admin" className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-[#141414] hover:bg-black/5">
               Admin
