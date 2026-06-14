@@ -95,44 +95,95 @@ function CreateUserModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function AdminUserTable({ users }: { users: UserRow[] }) {
+export default function AdminUserTable({ users, currentUserId }: { users: UserRow[]; currentUserId: string }) {
   const [rows, setRows] = useState(users);
   const [pending, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ id: string; msg: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ id: string; msg: string; ok: boolean } | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [pendingRole, setPendingRole] = useState<{ userId: string; role: Role } | null>(null);
 
-  function flash(id: string, msg: string) {
-    setFeedback({ id, msg });
-    setTimeout(() => setFeedback(null), 2500);
+  function flash(id: string, msg: string, ok = true) {
+    setFeedback({ id, msg, ok });
+    setTimeout(() => setFeedback(null), 3000);
   }
 
-  function handleRoleChange(userId: string, role: Role) {
+  function handleRoleSelect(userId: string, role: Role) {
+    if (userId === currentUserId) return;
+    setPendingRole({ userId, role });
+  }
+
+  function confirmRoleChange() {
+    if (!pendingRole) return;
+    const { userId, role } = pendingRole;
     setRows(r => r.map(u => u.id === userId ? { ...u, role } : u));
-    startTransition(() => updateUserRole(userId, role));
+    setPendingRole(null);
+    startTransition(async () => {
+      try { await updateUserRole(userId, role); }
+      catch (err) { flash(userId, err instanceof Error ? err.message : "Erreur", false); }
+    });
   }
 
   function handlePasswordReset(userId: string, email: string | null) {
     if (!email) return;
-    startTransition(async () => { await sendPasswordReset(email); flash(userId, "Email envoyé ✓"); });
+    startTransition(async () => {
+      try { await sendPasswordReset(email); flash(userId, "Email envoyé ✓"); }
+      catch (err) { flash(userId, err instanceof Error ? err.message : "Erreur", false); }
+    });
   }
 
   function handleToggleBlock(userId: string, blocked: boolean) {
+    if (userId === currentUserId) return;
     setRows(r => r.map(u => u.id === userId ? { ...u, blocked: !blocked } : u));
-    startTransition(() => toggleBlockUser(userId, !blocked));
+    startTransition(async () => {
+      try { await toggleBlockUser(userId, !blocked); }
+      catch (err) {
+        setRows(r => r.map(u => u.id === userId ? { ...u, blocked } : u));
+        flash(userId, err instanceof Error ? err.message : "Erreur", false);
+      }
+    });
   }
 
   function handleDelete(userId: string) {
     startTransition(async () => {
-      await deleteUser(userId);
-      setRows(r => r.filter(u => u.id !== userId));
-      setConfirmDelete(null);
+      try {
+        await deleteUser(userId);
+        setRows(r => r.filter(u => u.id !== userId));
+        setConfirmDelete(null);
+      } catch (err) {
+        flash(userId, err instanceof Error ? err.message : "Erreur", false);
+        setConfirmDelete(null);
+      }
     });
   }
+
+  const isSelf = (id: string) => id === currentUserId;
 
   return (
     <>
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} />}
+
+      {/* Role change confirmation modal */}
+      {pendingRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4">
+          <div className="w-full max-w-xs rounded-2xl border border-black/10 bg-[#EDEAE4] p-6 shadow-xl">
+            <p className="text-sm font-bold text-[#141414] mb-1">Modifier le rôle ?</p>
+            <p className="text-xs text-[#888880] mb-5">
+              Nouveau rôle : <strong>{ROLE_LABELS[pendingRole.role]}</strong>
+            </p>
+            <div className="flex gap-2">
+              <button onClick={confirmRoleChange}
+                className="flex-1 rounded-xl bg-[#141414] py-2.5 text-sm font-black text-white hover:bg-black">
+                Confirmer
+              </button>
+              <button onClick={() => setPendingRole(null)}
+                className="rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm text-[#888880] hover:bg-black/5">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-xs font-black uppercase tracking-wide text-[#888880]">
@@ -158,20 +209,31 @@ export default function AdminUserTable({ users }: { users: UserRow[] }) {
           </thead>
           <tbody className="divide-y divide-black/4">
             {rows.map(u => (
-              <tr key={u.id} className={`transition-colors ${u.blocked ? "bg-red-50/50" : "hover:bg-black/1"}`}>
+              <tr key={u.id} className={`transition-colors ${u.blocked ? "bg-red-50/50" : isSelf(u.id) ? "bg-[#C8F15A]/10" : "hover:bg-black/1"}`}>
                 <td className="px-4 py-3.5">
-                  <span className={`font-medium ${u.blocked ? "text-black/30 line-through" : "text-[#141414]"}`}>
-                    {u.email ?? "—"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-medium ${u.blocked ? "text-black/30 line-through" : "text-[#141414]"}`}>
+                      {u.email ?? "—"}
+                    </span>
+                    {isSelf(u.id) && (
+                      <span className="rounded-full border border-black/10 bg-[#C8F15A] px-2 py-0.5 text-[10px] font-bold text-[#141414]">Vous</span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-4 py-3.5">
-                  <select value={u.role} disabled={pending}
-                    onChange={e => handleRoleChange(u.id, e.target.value as Role)}
-                    className={`rounded-full border px-3 py-1 text-xs font-bold cursor-pointer outline-none ${ROLE_STYLES[u.role]}`}>
-                    <option value="user">Gratuit</option>
-                    <option value="client">Payant</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  {isSelf(u.id) ? (
+                    <span className={`inline-block rounded-full border px-3 py-1 text-xs font-bold ${ROLE_STYLES[u.role]}`}>
+                      {ROLE_LABELS[u.role]}
+                    </span>
+                  ) : (
+                    <select value={u.role} disabled={pending}
+                      onChange={e => handleRoleSelect(u.id, e.target.value as Role)}
+                      className={`rounded-full border px-3 py-1 text-xs font-bold cursor-pointer outline-none ${ROLE_STYLES[u.role]}`}>
+                      <option value="user">Gratuit</option>
+                      <option value="client">Payant</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  )}
                 </td>
                 <td className="px-4 py-3.5">
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold border ${
@@ -194,14 +256,18 @@ export default function AdminUserTable({ users }: { users: UserRow[] }) {
                   ) : (
                     <div className="flex items-center gap-1.5">
                       {feedback?.id === u.id ? (
-                        <span className="text-xs text-green-600">{feedback.msg}</span>
+                        <span className={`text-xs ${feedback.ok ? "text-green-600" : "text-red-500"}`}>{feedback.msg}</span>
                       ) : (
                         <>
                           <IconBtn onClick={() => handlePasswordReset(u.id, u.email)} title="Réinitialiser le mot de passe" disabled={pending}>✉</IconBtn>
-                          <IconBtn onClick={() => handleToggleBlock(u.id, u.blocked)} title={u.blocked ? "Débloquer" : "Bloquer"} disabled={pending}>
-                            {u.blocked ? "🔓" : "🔒"}
-                          </IconBtn>
-                          <IconBtn onClick={() => setConfirmDelete(u.id)} title="Supprimer" disabled={pending} danger>✕</IconBtn>
+                          {!isSelf(u.id) && (
+                            <>
+                              <IconBtn onClick={() => handleToggleBlock(u.id, u.blocked)} title={u.blocked ? "Débloquer" : "Bloquer"} disabled={pending}>
+                                {u.blocked ? "🔓" : "🔒"}
+                              </IconBtn>
+                              <IconBtn onClick={() => setConfirmDelete(u.id)} title="Supprimer" disabled={pending} danger>✕</IconBtn>
+                            </>
+                          )}
                         </>
                       )}
                     </div>

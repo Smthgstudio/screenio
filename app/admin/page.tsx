@@ -69,7 +69,7 @@ export default async function AdminPage() {
           ))}
         </div>
 
-        <AdminUserTable users={users} />
+        <AdminUserTable users={users} currentUserId={user.id} />
       </main>
     </div>
   );
